@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#4f8ef7"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="PericiasMed"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <title>PericiasMed</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; }
+    #root { min-height: 100vh; }
+    #splash {
+      position: fixed; inset: 0; background: #0f1117;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 9999; transition: opacity .4s;
+    }
+    #splash-icon { font-size: 56px; }
+    #splash-title { font-family: sans-serif; font-size: 22px; font-weight: 700; color: #e2e8f0; }
+    #splash-sub { font-family: monospace; font-size: 12px; color: #8891aa; }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div id="splash-icon">⚕️</div>
+    <div id="splash-title">PericiasMed</div>
+    <div id="splash-sub">carregando...</div>
+  </div>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+
+
+// ─── CSS ────────────────────────────────────────────────────────────────────
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  :root {
+    --bg:#0f1117; --surface:#1a1d27; --card:#21243a; --border:#2d3155;
+    --accent:#4f8ef7; --accent2:#7c5cfc; --green:#34d399; --yellow:#fbbf24;
+    --red:#f87171; --text:#e2e8f0; --muted:#8891aa; --mono:'JetBrains Mono',monospace;
+  }
+  .app { display:flex; min-height:100vh; }
+
+  /* sidebar */
+  .sidebar { width:240px; background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:24px 16px; gap:8px;
+    position:fixed; top:0; left:0; bottom:0; z-index:10; }
+  .logo { display:flex; align-items:center; gap:10px; padding:8px 12px 24px;
+    border-bottom:1px solid var(--border); margin-bottom:8px; }
+  .logo-icon { width:32px; height:32px; border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .logo-text { font-size:14px; font-weight:700; }
+  .logo-sub  { font-size:10px; color:var(--muted); font-family:var(--mono); }
+  .nav-section { font-size:10px; font-family:var(--mono); color:var(--muted);
+    padding:16px 12px 4px; text-transform:uppercase; letter-spacing:.08em; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
+    cursor:pointer; font-size:13px; font-weight:500; color:var(--muted);
+    transition:all .15s; border:none; background:none; width:100%; text-align:left; }
+  .nav-item:hover { color:var(--text); background:var(--card); }
+  .nav-item.active { color:var(--accent); background:rgba(79,142,247,.12); }
+
+  /* main */
+  .main { margin-left:240px; flex:1; padding:32px; }
+  .page-header { margin-bottom:28px; }
+  .page-title { font-size:22px; font-weight:700; }
+  .page-sub { color:var(--muted); font-size:13px; margin-top:4px; }
+
+  /* stats */
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:20px; display:flex; flex-direction:column; gap:4px; }
+  .stat-label { font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; }
+  .stat-value { font-size:28px; font-weight:700; font-family:var(--mono); }
+  .c-blue{color:var(--accent)} .c-green{color:var(--green)} .c-yellow{color:var(--yellow)} .c-red{color:var(--red)}
+
+  /* toolbar */
+  .toolbar { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+  .search-box { flex:1; min-width:220px; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:9px 14px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+  .search-box:focus { border-color:var(--accent); }
+  .search-box::placeholder { color:var(--muted); }
+  .filter-select { background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:9px 12px; color:var(--text); font-size:13px; cursor:pointer; outline:none; font-family:inherit; }
+  .btn { padding:9px 18px; border-radius:8px; border:none; cursor:pointer; font-size:13px;
+    font-weight:600; font-family:inherit; transition:all .15s; display:flex; align-items:center; gap:6px; }
+  .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+  .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+  .btn-success { background:linear-gradient(135deg,#059669,var(--green)); color:#fff; }
+  .btn-success:hover { opacity:.9; }
+  .btn-danger { background:rgba(248,113,113,.15); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+  .btn-ghost  { background:var(--card); color:var(--muted); border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text); }
+  .btn-sm { padding:5px 10px; font-size:12px; }
+
+  /* table */
+  .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  th { background:var(--surface); font-size:11px; font-family:var(--mono); text-transform:uppercase;
+    color:var(--muted); padding:12px 16px; text-align:left; font-weight:500; letter-spacing:.05em; }
+  td { padding:13px 16px; font-size:13px; border-top:1px solid var(--border); vertical-align:middle; }
+  tr:hover td { background:rgba(255,255,255,.02); }
+
+  /* badge */
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px;
+    font-size:11px; font-weight:600; font-family:var(--mono); }
+  .badge-agendada   { background:rgba(79,142,247,.15); color:var(--accent); }
+  .badge-realizada  { background:rgba(52,211,153,.15); color:var(--green); }
+  .badge-pendente   { background:rgba(251,191,36,.15); color:var(--yellow); }
+  .badge-cancelada  { background:rgba(248,113,113,.15); color:var(--red); }
+  .badge-laudo      { background:rgba(124,92,252,.15); color:var(--accent2); }
+  .badge-reagendado { background:rgba(248,113,113,.12); color:#fca5a5; border:1px solid rgba(248,113,113,.25); }
+
+  /* modal */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.65);
+    display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    width:100%; max-width:620px; padding:32px; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-size:17px; font-weight:700; margin-bottom:24px; }
+
+  /* form */
+  .form-row { display:grid; gap:16px; margin-bottom:16px; }
+  .form-2 { grid-template-columns:1fr 1fr; }
+  .form-3 { grid-template-columns:1fr 1fr 1fr; }
+  .field label { display:block; font-size:11px; font-family:var(--mono); color:var(--muted);
+    text-transform:uppercase; margin-bottom:6px; }
+  .field input,.field select,.field textarea { width:100%; background:var(--card);
+    border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text);
+    font-size:13px; outline:none; font-family:inherit; transition:border-color .15s; }
+  .field input:focus,.field select:focus,.field textarea:focus { border-color:var(--accent); }
+  .field textarea { resize:vertical; min-height:72px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+
+  /* importador */
+  .import-box { background:var(--card); border:2px dashed var(--border); border-radius:12px;
+    padding:28px; margin-bottom:20px; transition:border-color .2s; }
+  .import-box.drag { border-color:var(--accent); background:rgba(79,142,247,.05); }
+  .import-textarea { width:100%; min-height:180px; background:var(--bg); border:1px solid var(--border);
+    border-radius:8px; padding:14px; color:var(--text); font-size:12px; font-family:var(--mono);
+    outline:none; resize:vertical; line-height:1.6; }
+  .import-textarea:focus { border-color:var(--accent); }
+  .parse-preview { background:var(--bg); border:1px solid var(--border); border-radius:10px;
+    overflow:hidden; margin-top:16px; }
+  .parse-header { padding:12px 16px; background:var(--surface); font-size:11px; font-family:var(--mono);
+    color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+  .parse-row { padding:10px 16px; border-top:1px solid var(--border); font-size:12px;
+    display:grid; grid-template-columns:auto 1fr auto auto; gap:16px; align-items:center; }
+  .parse-row:hover { background:rgba(255,255,255,.02); }
+  .parse-num { font-family:var(--mono); color:var(--muted); font-size:11px; min-width:20px; }
+  .parse-proc { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .parse-hora { font-family:var(--mono); font-size:11px; }
+  .reagend-tag { font-size:10px; background:rgba(248,113,113,.12); color:#fca5a5;
+    border:1px solid rgba(248,113,113,.25); border-radius:4px; padding:2px 6px; font-family:var(--mono); }
+
+  /* detail */
+  .detail-panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; margin-top:20px; }
+  .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .detail-field label { font-size:10px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; display:block; margin-bottom:4px; }
+  .detail-field span { font-size:14px; }
+
+  /* timeline */
+  .tl-item { display:flex; gap:16px; }
+  .tl-line { display:flex; flex-direction:column; align-items:center; width:20px; }
+  .tl-dot  { width:10px; height:10px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:4px; }
+  .tl-bar  { flex:1; width:2px; background:var(--border); margin:4px 0; }
+  .tl-content { padding-bottom:20px; flex:1; }
+  .tl-date { font-size:11px; font-family:var(--mono); color:var(--muted); }
+  .tl-text { font-size:13px; margin-top:2px; }
+
+  /* empty / toast */
+  .empty { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-icon { font-size:40px; margin-bottom:12px; }
+  .empty h3 { color:var(--text); font-size:16px; margin-bottom:4px; }
+  .toast { position:fixed; bottom:28px; right:28px; background:var(--green); color:#0f1117;
+    padding:12px 20px; border-radius:10px; font-weight:700; font-size:13px; z-index:999;
+    animation:slideup .25s ease; }
+  @keyframes slideup { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+
+  @media(max-width:900px){
+    .mobile-nav { display:flex !important; }
+    .main { padding-bottom: 72px !important; }
+  }
+
+  @media(max-width:900px){
+    .sidebar{display:none} .main{margin-left:0;padding:16px}
+    .stats-row{grid-template-columns:1fr 1fr}
+    .form-2,.form-3{grid-template-columns:1fr}
+    .detail-grid{grid-template-columns:1fr}
+    .parse-row{grid-template-columns:auto 1fr auto}
+  }
+`;
+
+// ─── Constantes ─────────────────────────────────────────────────────────────
+const TIPOS  = ["Previdenciária","Trabalhista","Acidente de Trabalho","Criminal","Cível","Administrativa"];
+const STATUS = ["Agendada","Realizada","Pendente","Cancelada","Laudo Emitido"];
+const ORGAO_DEFAULT = "Justiça Federal – 5ª Região";
+
+// ─── Parser da pauta ─────────────────────────────────────────────────────────
+// Detecta linhas com: número, processo, nome, hora (ou *)
+// Exemplos:
+//   1 0033444-66.2026.4.05.8300 EDUARDO FERREIRA DA SILVA 07:00
+//   33 0031190-23.2026.4.05.8300 ALMIR FLORENTINO DO NASCIMENTO * —
+function parsePauta(text) {
+  // Extrai data do cabeçalho se existir
+  const dateMatch = text.match(/DIA\s+(\d{1,2})\s+DE\s+(\w+)\s+DE\s+(\d{4})/i);
+  const MESES = {janeiro:"01",fevereiro:"02",março:"03",abril:"04",maio:"05",junho:"06",
+    julho:"07",agosto:"08",setembro:"09",outubro:"10",novembro:"11",dezembro:"12"};
+  let dataBase = "";
+  if (dateMatch) {
+    const mes = MESES[dateMatch[2].toLowerCase()] || "01";
+    dataBase = `${dateMatch[3]}-${mes}-${dateMatch[1].padStart(2,"0")}`;
+  }
+
+  // Regex principal: número + processo + nome (caps) + hora ou *
+  // processo: dígitos-dígitos.dígitos.dígitos.dígitos.dígitos
+  const LINE = /^\s*(\d+)\s+([\d-]+\.[\d.]+)\s+([A-ZÁÉÍÓÚÃÕÂÊÎÔÛÀÇ][A-ZÁÉÍÓÚÃÕÂÊÎÔÛÀÇ\s]+?)\s+(\d{2}:\d{2}|\*)\s*/gm;
+
+  const results = [];
+  let m;
+  while ((m = LINE.exec(text)) !== null) {
+    const hora      = m[4] === "*" ? "" : m[4];
+    const reagendado = m[4] === "*";
+    const nome = m[3].trim().replace(/\s+/g, " ");
+    // pula linhas que são apenas cabeçalho repetido
+    if (nome.includes("PERICIANDO") || nome.includes("Nº DO")) continue;
+    results.push({
+      seq:       parseInt(m[1]),
+      processo:  m[2].trim(),
+      paciente:  nome,
+      hora,
+      reagendado,
+      data:      dataBase,
+    });
+  }
+  return { items: results, dataBase };
+}
+
+// ─── Reducer ─────────────────────────────────────────────────────────────────
+let nextId = 5;
+
+// ─── Persistência localStorage ───────────────────────────────────────────────
+const STORAGE_KEY = 'pericias_med_v1';
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.length > 0) {
+        // Atualiza nextId para não colidir
+        const maxId = Math.max(...parsed.map(p => p.id || 0));
+        nextId = maxId + 1;
+        return parsed;
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+function saveData(pericias) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pericias)); } catch(e) {}
+}
+
+const INIT_DATA = [
+  { id:1, paciente:"José Augusto Lima", cpf:"", processo:"2024.001.0012", tipo:"Previdenciária",
+    status:"Realizada", data:"2025-11-14", hora:"09:00", cid:"M54.5", patologia:"Lombociatalgia crônica",
+    orgao:"INSS – Ag. Centro", laudo:"Incapacidade parcial e temporária por 90 dias.", obs:"", reagendado:false },
+];
+
+function reducer(state, action) {
+  switch(action.type) {
+    case "ADD":         return [...state, { ...action.payload, id: nextId++ }];
+    case "ADD_BATCH":   return [...state, ...action.payload.map(p => ({ ...p, id: nextId++ }))];
+    case "UPDATE":      return state.map(p => p.id === action.payload.id ? action.payload : p);
+    case "DELETE":      return state.filter(p => p.id !== action.id);
+    case "REPLACE":     { const mx=Math.max(...action.payload.map(p=>p.id||0)); nextId=mx+1; return action.payload; }
+    default:            return state;
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmt = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR") : "–";
+const badgeCls = s => ({Agendada:"badge-agendada",Realizada:"badge-realizada",
+  Pendente:"badge-pendente",Cancelada:"badge-cancelada","Laudo Emitido":"badge-laudo"}[s]||"");
+const EMPTY_FORM = { paciente:"",cpf:"",processo:"",tipo:TIPOS[0],status:"Agendada",
+  data:"",hora:"",cid:"",patologia:"",orgao:"",laudo:"",obs:"",reagendado:false };
+
+// ─── Subcomponentes ───────────────────────────────────────────────────────────
+function Modal({ title, onClose, children, wide }) {
+  return (
+    <div className="overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal" style={wide?{maxWidth:780}:{}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+          <h2 className="modal-title" style={{margin:0}}>{title}</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function FF({ label, children }) {
+  return <div className="field"><label>{label}</label>{children}</div>;
+}
+
+function PericiaForm({ initial, onSave, onClose }) {
+  const [f, setF] = React.useState(initial || EMPTY_FORM);
+  const set = k => e => setF(p => ({...p, [k]: e.target.value}));
+  const ok = f.paciente && f.data;
+  return (
+    <>
+      <div className="form-row form-2">
+        <FF label="Paciente / Periciando"><input value={f.paciente} onChange={set("paciente")} placeholder="Nome completo"/></FF>
+        <FF label="CPF (mascarado)"><input value={f.cpf} onChange={set("cpf")} placeholder="***.***.000-00"/></FF>
+      </div>
+      <div className="form-row form-3">
+        <FF label="Nº Processo"><input value={f.processo} onChange={set("processo")} placeholder="0000000-00.0000.0.00.0000"/></FF>
+        <FF label="Tipo de Perícia">
+          <select value={f.tipo} onChange={set("tipo")}>{TIPOS.map(t=><option key={t}>{t}</option>)}</select>
+        </FF>
+        <FF label="Status">
+          <select value={f.status} onChange={set("status")}>{STATUS.map(s=><option key={s}>{s}</option>)}</select>
+        </FF>
+      </div>
+      <div className="form-row form-3">
+        <FF label="Data"><input type="date" value={f.data} onChange={set("data")}/></FF>
+        <FF label="Hora"><input type="time" value={f.hora} onChange={set("hora")}/></FF>
+        <FF label="CID-10"><input value={f.cid} onChange={set("cid")} placeholder="Ex: M54.5"/></FF>
+      </div>
+      <div className="form-row form-2">
+        <FF label="Patologia / Diagnóstico"><input value={f.patologia} onChange={set("patologia")} placeholder="Descrição clínica"/></FF>
+        <FF label="Órgão / Instância"><input value={f.orgao} onChange={set("orgao")} placeholder="Ex: INSS – Ag. Centro"/></FF>
+      </div>
+      <div className="form-row">
+        <FF label="Conclusão do Laudo"><textarea value={f.laudo} onChange={set("laudo")} placeholder="Síntese da conclusão pericial..."/></FF>
+      </div>
+      <div className="form-row">
+        <FF label="Observações"><textarea value={f.obs} onChange={set("obs")} placeholder="Notas, documentos pendentes, etc."/></FF>
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={!ok} style={!ok?{opacity:.5}:{}}
+          onClick={() => { if(ok){ onSave(f); onClose(); } }}>
+          💾 Salvar Perícia
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ─── Importador ───────────────────────────────────────────────────────────────
+function ImportadorModal({ onImport, onClose, existentes }) {
+  const [texto, setTexto] = React.useState("");
+  const [parsed, setParsed] = React.useState(null);
+  const [selecionados, setSelecionados] = React.useState({});
+  const [tipo, setTipo] = React.useState("Previdenciária");
+  const [orgao, setOrgao] = React.useState(ORGAO_DEFAULT);
+  const taRef = React.useRef();
+
+  const handleParse = () => {
+    const result = parsePauta(texto);
+    if (result.items.length === 0) {
+      alert("Nenhuma linha reconhecida. Verifique se o texto contém o formato: número, processo, nome, hora.");
+      return;
+    }
+    // Processos já cadastrados
+    const procsCadastrados = new Set(existentes.map(p => p.processo));
+    const sel = {};
+    result.items.forEach(it => {
+      sel[it.seq] = !procsCadastrados.has(it.processo); // pré-seleciona apenas os novos
+    });
+    setSelecionados(sel);
+    setParsed(result);
+  };
+
+  const toggle = seq => setSelecionados(s => ({...s, [seq]: !s[seq]}));
+  const toggleAll = v => {
+    const s = {};
+    parsed.items.forEach(it => s[it.seq] = v);
+    setSelecionados(s);
+  };
+
+  const qtdSel = parsed ? parsed.items.filter(it => selecionados[it.seq]).length : 0;
+
+  const handleImport = () => {
+    const itens = parsed.items.filter(it => selecionados[it.seq]);
+    const novos = itens.map(it => ({
+      paciente:  it.paciente,
+      cpf:       "",
+      processo:  it.processo,
+      tipo,
+      status:    it.reagendado ? "Pendente" : "Agendada",
+      data:      it.data,
+      hora:      it.hora,
+      cid:       "",
+      patologia: "",
+      orgao,
+      laudo:     "",
+      obs:       it.reagendado ? "Reagendado — verificar disponibilidade." : "",
+      reagendado: it.reagendado,
+    }));
+    onImport(novos);
+    onClose();
+  };
+
+  const procsCadastrados = new Set(existentes.map(p => p.processo));
+
+  return (
+    <Modal title="📥 Importar Pauta da Justiça Federal" onClose={onClose} wide>
+      <div style={{fontSize:13, color:"var(--muted)", marginBottom:16, lineHeight:1.6}}>
+        Cole abaixo o texto copiado diretamente do PDF ou site da Justiça Federal.<br/>
+        O sistema reconhece automaticamente o número, processo, nome e horário de cada periciando.
+      </div>
+
+      {/* Área de texto */}
+      <textarea
+        ref={taRef}
+        className="import-textarea"
+        placeholder={"Cole aqui o conteúdo da pauta...\n\nExemplo:\nDIA 30 DE JUNHO DE 2026\n1 0033444-66.2026.4.05.8300 EDUARDO FERREIRA DA SILVA 07:00\n2 0045456-49.2025.4.05.8300 SUZANA NOGUEIRA DE LIMA 07:12\n33 0031190-23.2026.4.05.8300 ALMIR FLORENTINO DO NASCIMENTO * —"}
+        value={texto}
+        onChange={e => { setTexto(e.target.value); setParsed(null); }}
+      />
+
+      {/* Config de importação */}
+      <div className="form-row form-2" style={{marginTop:16}}>
+        <FF label="Tipo de Perícia (padrão)">
+          <select value={tipo} onChange={e => setTipo(e.target.value)}>
+            {TIPOS.map(t=><option key={t}>{t}</option>)}
+          </select>
+        </FF>
+        <FF label="Órgão / Instância">
+          <input value={orgao} onChange={e => setOrgao(e.target.value)} placeholder="Ex: Justiça Federal 5ª Região"/>
+        </FF>
+      </div>
+
+      <div style={{display:"flex", gap:10, marginBottom:16}}>
+        <button className="btn btn-primary" onClick={handleParse} disabled={!texto.trim()} style={!texto.trim()?{opacity:.5}:{}}>
+          🔍 Interpretar Pauta
+        </button>
+        {parsed && <span style={{fontSize:12,color:"var(--green)",alignSelf:"center"}}>
+          ✓ {parsed.items.length} perícias identificadas • data: {parsed.dataBase ? fmt(parsed.dataBase) : "não detectada"}
+        </span>}
+      </div>
+
+      {/* Preview */}
+      {parsed && parsed.items.length > 0 && (
+        <div className="parse-preview">
+          <div className="parse-header">
+            <span>{qtdSel} de {parsed.items.length} selecionadas para importar</span>
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn btn-ghost btn-sm" onClick={() => toggleAll(true)}>Marcar todas</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => toggleAll(false)}>Desmarcar</button>
+            </div>
+          </div>
+          <div style={{maxHeight:320, overflowY:"auto"}}>
+            {parsed.items.map(it => {
+              const jaCadastrado = procsCadastrados.has(it.processo);
+              return (
+                <div key={it.seq} className="parse-row"
+                  style={{cursor:"pointer", opacity: jaCadastrado?0.5:1}}
+                  onClick={() => !jaCadastrado && toggle(it.seq)}>
+                  <span className="parse-num">{it.seq}</span>
+                  <div>
+                    <div style={{fontWeight:600, fontSize:13}}>{it.paciente}</div>
+                    <span className="parse-proc">{it.processo}</span>
+                    {jaCadastrado && <span style={{fontSize:10,color:"var(--yellow)",marginLeft:8}}>já cadastrado</span>}
+                  </div>
+                  <span className="parse-hora" style={{color: it.hora ? "var(--text)" : "var(--muted)"}}>
+                    {it.hora || "horário a def."}
+                  </span>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    {it.reagendado && <span className="reagend-tag">reagendado</span>}
+                    {!jaCadastrado && (
+                      <div style={{
+                        width:18, height:18, border:"2px solid",
+                        borderColor: selecionados[it.seq] ? "var(--accent)" : "var(--border)",
+                        borderRadius:4, background: selecionados[it.seq] ? "var(--accent)" : "transparent",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:11, color:"#fff", flexShrink:0
+                      }}>
+                        {selecionados[it.seq] ? "✓" : ""}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="modal-footer">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        {parsed && (
+          <button className="btn btn-success" disabled={qtdSel===0}
+            style={qtdSel===0?{opacity:.5}:{}}
+            onClick={handleImport}>
+            ✅ Importar {qtdSel} perícia{qtdSel!==1?"s":""}
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [pericias, dispatch] = React.useReducer(reducer, null, () => loadData() || INIT_DATA);
+  const [page, setPage]       = React.useState("lista");
+  const [search, setSearch]   = React.useState("");
+  const [filterStatus, setFS] = React.useState("");
+  const [filterTipo,   setFT] = React.useState("");
+  const [modal, setModal]     = React.useState(null);
+  const [selected, setSel]    = React.useState(null);
+  const [toast, setToast]     = React.useState("");
+
+  const showToast = msg => { setToast(msg); setTimeout(()=>setToast(""),3000); };
+
+  // Salva dados ao alterar
+  React.React.useEffect(() => { saveData(pericias); }, [pericias]);
+
+  // Export JSON
+  const exportJSON = () => {
+    const blob = new Blob([JSON.stringify(pericias, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `pericias_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import JSON backup
+  const importJSON = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (Array.isArray(data)) {
+          dispatch({ type: 'REPLACE', payload: data });
+          showToast('✅ Backup restaurado!');
+        }
+      } catch { alert('Arquivo inválido.'); }
+    };
+    reader.readAsText(file);
+  };
+
+
+  const filtered = React.useMemo(() => pericias.filter(p => {
+    const q = search.toLowerCase();
+    const mQ = !q || p.paciente.toLowerCase().includes(q) || p.processo.includes(q) || (p.cid||"").toLowerCase().includes(q);
+    return mQ && (!filterStatus || p.status===filterStatus) && (!filterTipo || p.tipo===filterTipo);
+  }), [pericias, search, filterStatus, filterTipo]);
+
+  const stats = React.useMemo(() => ({
+    total:     pericias.length,
+    agendadas: pericias.filter(p=>p.status==="Agendada").length,
+    realizadas:pericias.filter(p=>p.status==="Realizada"||p.status==="Laudo Emitido").length,
+    pendentes: pericias.filter(p=>p.status==="Pendente").length,
+  }), [pericias]);
+
+  const today = new Date().toISOString().slice(0,10);
+  const proximas = pericias.filter(p=>p.data>=today&&p.status==="Agendada")
+    .sort((a,b)=>a.data.localeCompare(b.data)||a.hora.localeCompare(b.hora)).slice(0,6);
+
+  const nav = (id,label,icon) => (
+    <button key={id} className={`nav-item${page===id?" active":""}`} onClick={()=>setPage(id)}>
+      <span>{icon}</span>{label}
+    </button>
+  );
+
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="app">
+
+        {/* ── Sidebar ── */}
+        <aside className="sidebar">
+          <div className="logo">
+            <div className="logo-icon">⚕️</div>
+            <div><div className="logo-text">PericiasMed</div><div className="logo-sub">v2.0</div></div>
+          </div>
+          <div className="nav-section">Navegação</div>
+          {nav("dashboard","Dashboard","📊")}
+          {nav("lista","Perícias","📋")}
+          {nav("agenda","Agenda","📅")}
+          {nav("laudos","Laudos","📝")}
+          <div style={{marginTop:"auto",paddingTop:16,borderTop:"1px solid var(--border)",display:"flex",flexDirection:"column",gap:8}}>
+            <button className="nav-item" onClick={exportJSON} style={{fontSize:12}}>
+              <span>💾</span> Exportar backup
+            </button>
+            <label className="nav-item" style={{cursor:"pointer",fontSize:12}}>
+              <span>📂</span> Restaurar backup
+              <input type="file" accept=".json" onChange={importJSON} style={{display:"none"}}/>
+            </label>
+          </div>
+        </aside>
+
+        {/* ── Main ── */}
+        <main className="main">
+
+          {/* ══ DASHBOARD ══ */}
+          {page==="dashboard" && (<>
+            <div className="page-header">
+              <div className="page-title">Dashboard</div>
+              <div className="page-sub">Visão geral das suas perícias médicas</div>
+            </div>
+            <div className="stats-row">
+              <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value c-blue">{stats.total}</div></div>
+              <div className="stat-card"><div className="stat-label">Agendadas</div><div className="stat-value c-yellow">{stats.agendadas}</div></div>
+              <div className="stat-card"><div className="stat-label">Realizadas / Laudos</div><div className="stat-value c-green">{stats.realizadas}</div></div>
+              <div className="stat-card"><div className="stat-label">Pendentes</div><div className="stat-value c-red">{stats.pendentes}</div></div>
+            </div>
+            <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>⏳ Próximas Agendadas</h3>
+            {proximas.length===0
+              ? <div className="empty" style={{padding:"30px 0"}}><p>Nenhuma perícia agendada.</p></div>
+              : <div className="table-wrap"><table>
+                  <thead><tr><th>Paciente</th><th>Data / Hora</th><th>Tipo</th><th>Órgão</th></tr></thead>
+                  <tbody>{proximas.map(p=>(
+                    <tr key={p.id} style={{cursor:"pointer"}} onClick={()=>{setSel(p);setModal("view");}}>
+                      <td><strong>{p.paciente}</strong><br/><span style={{color:"var(--muted)",fontSize:11}}>{p.processo}</span></td>
+                      <td style={{fontFamily:"var(--mono)",fontSize:12}}>{fmt(p.data)}{p.hora&&` • ${p.hora}`}</td>
+                      <td style={{fontSize:12,color:"var(--muted)"}}>{p.tipo}</td>
+                      <td style={{fontSize:12}}>{p.orgao||"–"}</td>
+                    </tr>
+                  ))}</tbody>
+                </table></div>
+            }
+            <div style={{marginTop:24}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>📊 Por Status</h3>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                {STATUS.map(s=>{
+                  const n=pericias.filter(p=>p.status===s).length;
+                  const pct=pericias.length?Math.round(n/pericias.length*100):0;
+                  return(
+                    <div key={s} className="stat-card" style={{flex:"1",minWidth:120}}>
+                      <div className="stat-label">{s}</div>
+                      <div style={{fontSize:22,fontWeight:700,fontFamily:"var(--mono)"}}>{n}</div>
+                      <div style={{marginTop:8,height:4,borderRadius:2,background:"var(--border)"}}>
+                        <div style={{height:"100%",borderRadius:2,width:`${pct}%`,
+                          background:"linear-gradient(90deg,var(--accent),var(--accent2))"}}/>
+                      </div>
+                      <div style={{fontSize:10,color:"var(--muted)",marginTop:4,fontFamily:"var(--mono)"}}>{pct}%</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>)}
+
+          {/* ══ LISTA ══ */}
+          {page==="lista" && (<>
+            <div className="page-header">
+              <div className="page-title">Perícias Médicas</div>
+              <div className="page-sub">{pericias.length} registros</div>
+            </div>
+            <div className="toolbar">
+              <input className="search-box" placeholder="🔍  Buscar por nome, processo ou CID..."
+                value={search} onChange={e=>setSearch(e.target.value)}/>
+              <select className="filter-select" value={filterStatus} onChange={e=>setFS(e.target.value)}>
+                <option value="">Todos os status</option>
+                {STATUS.map(s=><option key={s}>{s}</option>)}
+              </select>
+              <select className="filter-select" value={filterTipo} onChange={e=>setFT(e.target.value)}>
+                <option value="">Todos os tipos</option>
+                {TIPOS.map(t=><option key={t}>{t}</option>)}
+              </select>
+              <button className="btn btn-success" onClick={()=>setModal("import")}>
+                📥 Importar Pauta
+              </button>
+              <button className="btn btn-primary" onClick={()=>{setSel(null);setModal("new");}}>
+                + Nova Perícia
+              </button>
+            </div>
+
+            {filtered.length===0
+              ? <div className="empty"><div className="empty-icon">🔍</div><h3>Nenhuma perícia encontrada</h3>
+                  <p>Ajuste os filtros, cadastre manualmente ou importe uma pauta.</p></div>
+              : <div className="table-wrap"><table>
+                  <thead><tr><th>#</th><th>Paciente</th><th>Processo</th><th>Tipo</th><th>Data / Hora</th><th>CID</th><th>Status</th><th>Ações</th></tr></thead>
+                  <tbody>{filtered.map((p,i)=>(
+                    <tr key={p.id}>
+                      <td style={{color:"var(--muted)",fontFamily:"var(--mono)",fontSize:11}}>{i+1}</td>
+                      <td>
+                        <strong style={{display:"block"}}>{p.paciente}</strong>
+                        <span style={{fontSize:11,color:"var(--muted)"}}>{p.orgao||"–"}</span>
+                        {p.reagendado && <span className="reagend-tag" style={{marginLeft:0,display:"inline-block",marginTop:2}}>reagendado</span>}
+                      </td>
+                      <td style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--muted)"}}>{p.processo}</td>
+                      <td style={{fontSize:12}}>{p.tipo}</td>
+                      <td style={{fontFamily:"var(--mono)",fontSize:12}}>
+                        {fmt(p.data)}{p.hora&&<><br/><span style={{fontSize:10,color:"var(--muted)"}}>{p.hora}</span></>}
+                      </td>
+                      <td style={{fontFamily:"var(--mono)",fontSize:12}}>{p.cid||"–"}</td>
+                      <td><span className={`badge ${badgeCls(p.status)}`}>● {p.status}</span></td>
+                      <td><div style={{display:"flex",gap:6}}>
+                        <button className="btn btn-ghost btn-sm" title="Ver" onClick={()=>{setSel(p);setModal("view");}}>👁</button>
+                        <button className="btn btn-ghost btn-sm" title="Editar" onClick={()=>{setSel(p);setModal("edit");}}>✏️</button>
+                        <button className="btn btn-danger btn-sm" title="Excluir"
+                          onClick={()=>{ if(confirm(`Excluir perícia de ${p.paciente}?`)) dispatch({type:"DELETE",id:p.id}); }}>🗑</button>
+                      </div></td>
+                    </tr>
+                  ))}</tbody>
+                </table></div>
+            }
+          </>)}
+
+          {/* ══ AGENDA ══ */}
+          {page==="agenda" && (<>
+            <div className="page-header">
+              <div className="page-title">Agenda</div>
+              <div className="page-sub">Perícias em ordem cronológica</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:0}}>
+              {pericias.slice().sort((a,b)=>a.data.localeCompare(b.data)||a.hora.localeCompare(b.hora)).map((p,i,arr)=>(
+                <div key={p.id} className="tl-item">
+                  <div className="tl-line">
+                    <div className="tl-dot" style={{background:p.data<today?"var(--muted)":"var(--accent)"}}/>
+                    {i<arr.length-1&&<div className="tl-bar"/>}
+                  </div>
+                  <div className="tl-content">
+                    <div className="tl-date">{fmt(p.data)}{p.hora&&` • ${p.hora}`}</div>
+                    <div className="tl-text">
+                      <strong>{p.paciente}</strong>
+                      <span className={`badge ${badgeCls(p.status)}`} style={{marginLeft:8}}>● {p.status}</span>
+                      {p.reagendado&&<span className="reagend-tag" style={{marginLeft:6}}>reagendado</span>}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--muted)",marginTop:2}}>
+                      {p.tipo} • {p.orgao||"–"}{p.cid&&` • CID ${p.cid}`}
+                    </div>
+                    {p.obs&&<div style={{fontSize:12,color:"var(--yellow)",marginTop:4}}>⚠ {p.obs}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>)}
+
+          {/* ══ LAUDOS ══ */}
+          {page==="laudos" && (<>
+            <div className="page-header">
+              <div className="page-title">Laudos</div>
+              <div className="page-sub">Perícias com conclusão registrada</div>
+            </div>
+            {pericias.filter(p=>p.laudo).length===0
+              ? <div className="empty"><div className="empty-icon">📝</div><h3>Nenhum laudo registrado</h3>
+                  <p>Edite uma perícia realizada e adicione a conclusão.</p></div>
+              : pericias.filter(p=>p.laudo).map(p=>(
+                  <div key={p.id} className="detail-panel" style={{marginBottom:16}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:15}}>{p.paciente}</div>
+                        <div style={{fontSize:11,color:"var(--muted)",fontFamily:"var(--mono)",marginTop:2}}>
+                          {p.processo} • {p.tipo} • {fmt(p.data)}
+                        </div>
+                      </div>
+                      <span className={`badge ${badgeCls(p.status)}`}>● {p.status}</span>
+                    </div>
+                    <div style={{background:"var(--card)",borderRadius:8,padding:"12px 16px",borderLeft:"3px solid var(--accent2)"}}>
+                      <div style={{fontSize:10,fontFamily:"var(--mono)",color:"var(--muted)",marginBottom:6}}>CONCLUSÃO PERICIAL</div>
+                      <div style={{fontSize:13,lineHeight:1.7}}>{p.laudo}</div>
+                    </div>
+                    {p.patologia&&<div style={{fontSize:12,color:"var(--muted)",marginTop:10}}>🏥 {p.patologia}{p.cid&&` (CID ${p.cid})`}</div>}
+                  </div>
+                ))
+            }
+          </>)}
+
+        </main>
+
+        {/* ══ MODAIS ══ */}
+        {modal==="import" && (
+          <ImportadorModal
+            existentes={pericias}
+            onClose={() => setModal(null)}
+            onImport={novos => {
+              dispatch({ type:"ADD_BATCH", payload: novos });
+              showToast(`✅ ${novos.length} perícia${novos.length!==1?"s":""} importada${novos.length!==1?"s":""}!`);
+            }}
+          />
+        )}
+
+        {(modal==="new"||modal==="edit") && (
+          <Modal title={modal==="new"?"Nova Perícia":"Editar Perícia"} onClose={()=>setModal(null)}>
+            <PericiaForm
+              initial={modal==="edit"?selected:null}
+              onSave={f => dispatch({type:modal==="new"?"ADD":"UPDATE", payload:{...f,id:selected?.id}})}
+              onClose={()=>setModal(null)}
+            />
+          </Modal>
+        )}
+
+        {modal==="view" && selected && (
+          <Modal title="Detalhes da Perícia" onClose={()=>setModal(null)}>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:18,fontWeight:700}}>{selected.paciente}</div>
+              <div style={{fontSize:12,color:"var(--muted)",fontFamily:"var(--mono)",marginTop:4}}>{selected.processo}</div>
+              <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap"}}>
+                <span className={`badge ${badgeCls(selected.status)}`}>● {selected.status}</span>
+                {selected.reagendado&&<span className="reagend-tag">reagendado</span>}
+              </div>
+            </div>
+            <div className="detail-grid" style={{marginBottom:20}}>
+              {[["Tipo","tipo"],["Órgão","orgao"],["Data","data"],["Hora","hora"],["CID-10","cid"],["Patologia","patologia"]].map(([l,k])=>(
+                <div key={k} className="detail-field">
+                  <label>{l}</label>
+                  <span>{k==="data"?fmt(selected[k]):(selected[k]||"–")}</span>
+                </div>
+              ))}
+            </div>
+            {selected.laudo&&(
+              <div style={{background:"var(--card)",borderRadius:8,padding:"12px 16px",borderLeft:"3px solid var(--accent2)",marginBottom:12}}>
+                <div style={{fontSize:10,fontFamily:"var(--mono)",color:"var(--muted)",marginBottom:6}}>CONCLUSÃO PERICIAL</div>
+                <div style={{fontSize:13}}>{selected.laudo}</div>
+              </div>
+            )}
+            {selected.obs&&(
+              <div style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:8,padding:"12px 16px"}}>
+                <div style={{fontSize:11,color:"var(--yellow)",marginBottom:4}}>⚠ OBSERVAÇÕES</div>
+                <div style={{fontSize:13}}>{selected.obs}</div>
+              </div>
+            )}
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={()=>setModal(null)}>Fechar</button>
+              <button className="btn btn-primary" onClick={()=>setModal("edit")}>✏️ Editar</button>
+            </div>
+          </Modal>
+        )}
+
+
+        {/* ── Bottom nav mobile ── */}
+        <nav style={{display:"none",position:"fixed",bottom:0,left:0,right:0,
+          background:"var(--surface)",borderTop:"1px solid var(--border)",
+          zIndex:20,padding:"8px 0"}} className="mobile-nav">
+          {[["dashboard","📊","Dashboard"],["lista","📋","Perícias"],["agenda","📅","Agenda"],["laudos","📝","Laudos"]].map(([id,ic,lb])=>(
+            <button key={id} onClick={()=>setPage(id)} style={{
+              flex:1,border:"none",background:"none",display:"flex",flexDirection:"column",
+              alignItems:"center",gap:2,padding:"4px 0",cursor:"pointer",
+              color:page===id?"var(--accent)":"var(--muted)",fontSize:10,fontFamily:"inherit"
+            }}><span style={{fontSize:20}}>{ic}</span>{lb}</button>
+          ))}
+        </nav>
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    </>
+  );
+}
+
+    // Mount
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(React.createElement(App));
+
+    // Hide splash
+    setTimeout(() => {
+      const s = document.getElementById('splash');
+      if (s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 400); }
+    }, 800);
+  </script>
+
+  <script>
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
